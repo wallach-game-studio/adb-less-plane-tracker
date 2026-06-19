@@ -1,0 +1,71 @@
+# Aircraft Tracker configuration
+# Fill in the TODO values before running.
+
+location:
+  lat: 0.0   # TODO: your GPS latitude
+  lon: 0.0   # TODO: your GPS longitude
+  alt_m: 0.0 # TODO: site elevation above sea level, meters
+
+home_assistant:
+  url: "http://homeassistant.local:8123"  # TODO
+  token: "TODO_LONG_LIVED_ACCESS_TOKEN"
+
+opensky:
+  username: ""  # optional, leave blank for anonymous access
+  password: ""
+  poll_interval_s: 5
+  bbox_radius_km: 50
+  prediction_seconds: 15
+
+detection:
+  accept_radius: 40
+  roi_r: 80
+  min_area: 1
+  max_area: 50
+  blob_color: 0
+
+recording:
+  output_dir: "./recordings"
+  clip_duration_s: 30
+  ffmpeg_path: "ffmpeg"
+
+vps:
+  host: "TODO.example.com"
+  user: "TODO"
+  ssh_key_path: "~/.ssh/id_rsa"
+  remote_path: "/srv/aircraft-tracker/clips"
+  domain: "TODO.example.com"
+
+cameras:
+  cam_a:
+    az_min: 30
+    az_max: 180
+    el_min: 5
+    el_max: 45
+    rtsp: "rtsp://user:pass@CAM_A_IP/stream"
+    pan_entity: "sensor.reolink_a_pan_position"
+    tilt_entity: "sensor.reolink_a_tilt_position"
+    pan_scale: 0.1
+    pan_offset: 0
+    tilt_scale: 0.1
+    tilt_offset: 0
+    fov_h: 90.0
+    fov_v: 50.0
+    img_w: 2560
+    img_h: 1440
+  cam_b:
+    az_min: 150
+    az_max: 300
+    el_min: 5
+    el_max: 45
+    rtsp: "rtsp://user:pass@CAM_B_IP/stream"
+    pan_entity: "sensor.reolink_b_pan_position"
+    tilt_entity: "sensor.reolink_b_tilt_position"
+    pan_scale: 0.1
+    pan_offset: 0
+    tilt_scale: 0.1
+    tilt_offset: 0
+    fov_h: 90.0
+    fov_v: 50.0
+    img_w: 2560
+    img_h: 1440

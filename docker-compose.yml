@@ -1,0 +1,24 @@
+services:
+  tracker:
+    build:
+      context: .
+      dockerfile: tracker/Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./recordings:/app/recordings
+    environment:
+      - TRACKER_CONFIG=/app/config.yaml
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./recordings:/app/recordings
+    environment:
+      - TRACKER_CONFIG=/app/config.yaml
