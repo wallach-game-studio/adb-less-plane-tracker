@@ -5,92 +5,45 @@ on:
     branches: ["**"]
   pull_request:
     branches: ["**"]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: Build & test
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
       - name: Sanity-check imports
-        run: python -m compileall tracker web
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        run: python3 -m compileall tracker web
 
       - name: Build tracker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: tracker/Dockerfile
-          push: false
-          tags: aircraft-tracker-tracker:ci
+        run: |
+          docker build \
+            -f tracker/Dockerfile \
+            -t adb-less-plane-tracker-tracker:${{ github.sha }} \
+            -t adb-less-plane-tracker-tracker:latest \
+            .
 
       - name: Build web image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: web/Dockerfile
-          push: false
-          tags: aircraft-tracker-web:ci
+        run: |
+          docker build \
+            -f web/Dockerfile \
+            -t adb-less-plane-tracker:${{ github.sha }} \
+            -t adb-less-plane-tracker:latest \
+            .
 
-  # ---------------------------------------------------------------------------
-  # deploy-prod: left for the DevOps agent to implement.
-  # Intended shape: build+push images to a registry, then deploy to the VPS
-  # (e.g. via SSH + `docker compose pull && docker compose up -d`, or a
-  # registry webhook). Needs secrets such as REGISTRY_USERNAME/PASSWORD,
-  # VPS_HOST/VPS_USER/VPS_SSH_KEY before it can run.
-  # ---------------------------------------------------------------------------
-  # deploy-prod:
-  #   needs: build
-  #   if: github.ref == 'refs/heads/main'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Log in to registry
-  #       uses: docker/login-action@v3
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
-  #
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v3
-  #
-  #     - name: Build and push tracker image
-  #       uses: docker/build-push-action@v6
-  #       with:
-  #         context: .
-  #         file: tracker/Dockerfile
-  #         push: true
-  #         tags: ghcr.io/${{ github.repository }}/tracker:latest
-  #
-  #     - name: Build and push web image
-  #       uses: docker/build-push-action@v6
-  #       with:
-  #         context: .
-  #         file: web/Dockerfile
-  #         push: true
-  #         tags: ghcr.io/${{ github.repository }}/web:latest
-  #
-  #     - name: Deploy to VPS
-  #       uses: appleboy/ssh-action@v1
-  #       with:
-  #         host: ${{ secrets.VPS_HOST }}
-  #         username: ${{ secrets.VPS_USER }}
-  #         key: ${{ secrets.VPS_SSH_KEY }}
-  #         script: |
-  #           cd /srv/aircraft-tracker
-  #           docker compose pull
-  #           docker compose up -d
+  deploy:
+    name: Deploy
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: self-hosted
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        run: |
+          docker compose -p adb-less-plane-tracker up -d --force-recreate
