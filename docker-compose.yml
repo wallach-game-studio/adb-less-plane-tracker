@@ -1,24 +1,31 @@
 services:
   tracker:
-    build:
-      context: .
-      dockerfile: tracker/Dockerfile
+    image: adb-less-plane-tracker-tracker:latest
+    container_name: adb-less-plane-tracker-tracker
     restart: unless-stopped
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./recordings:/app/recordings
     environment:
       - TRACKER_CONFIG=/app/config.yaml
+    networks:
+      - internal
 
   web:
-    build:
-      context: .
-      dockerfile: web/Dockerfile
+    image: adb-less-plane-tracker:latest
+    container_name: adb-less-plane-tracker
     restart: unless-stopped
-    ports:
-      - "8000:8000"
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./recordings:/app/recordings
     environment:
       - TRACKER_CONFIG=/app/config.yaml
+    networks:
+      - internal
+      - praktor-net
+
+networks:
+  internal:
+  praktor-net:
+    external: true
+    name: praktor-net
